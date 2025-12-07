@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+websockets
+pandas
+numpy
+pytest-asyncio
+scikit-learn
+langgraph
+langchain
+langchain_openai
+asyncpg
+sqlalchemy
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+greenlet
+alembic
