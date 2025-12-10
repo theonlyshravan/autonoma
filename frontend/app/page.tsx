@@ -5,21 +5,47 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Scan, ShieldAlert } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate auth delay for "biometric scan" effect
-    setTimeout(() => {
-      // Mock navigate to customer dashboard
-      router.push("/dashboard/customer");
-    }, 2000);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("username", email);
+      formData.append("password", password);
+
+      const response = await fetch("http://localhost:8000/api/auth/login", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Invalid credentials");
+      }
+
+      const data = await response.json();
+      login(data.access_token);
+
+      // Redirect is handled in AuthContext but we can default here just in case async takes time
+      // The context will redirect based on role
+    } catch (err) {
+      setError("Authentication failed. Please check your credentials.");
+      console.error(err);
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,17 +85,38 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-mono text-primary/70 uppercase">/ User_ID</label>
-                <Input placeholder="Enter Operator ID" className="border-primary/20 focus-visible:ring-primary/50 bg-black/50" />
+                <Input
+                  placeholder="Enter Email"
+                  className="border-primary/20 focus-visible:ring-primary/50 bg-black/50"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-mono text-primary/70 uppercase">/ Access_Key</label>
-                <Input type="password" placeholder="••••••••" className="border-primary/20 focus-visible:ring-primary/50 bg-black/50" />
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  className="border-primary/20 focus-visible:ring-primary/50 bg-black/50"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
               </div>
+
+              {error && (
+                <div className="flex items-center gap-2 text-destructive text-xs font-mono bg-destructive/10 p-2 rounded border border-destructive/20">
+                  <ShieldAlert className="w-4 h-4" />
+                  {error}
+                </div>
+              )}
 
               <Button
                 variant="cyber"
                 className="w-full h-12 mt-4 text-lg font-display tracking-widest hover:bg-primary/20"
                 disabled={loading}
+                type="submit"
               >
                 {loading ? "AUTHENTICATING..." : "INITIATE SESSION"}
               </Button>

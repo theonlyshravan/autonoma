@@ -1,4 +1,4 @@
-from typing import TypedDict, List, Dict, Any, Optional
+from typing import TypedDict, List, Dict, Any, Optional, Literal, Tuple
 
 class VehicleState(TypedDict):
     vehicle_id: str
@@ -12,3 +12,6 @@ class VehicleState(TypedDict):
     messages: List[Dict[str, str]]
     booking_id: Optional[str]
     error: Optional[str]
+    show_booking_ui: bool
+    available_slots: List[str]
+    booking_intent: Optional[Dict[str, str]]

@@ -3,6 +3,10 @@ import random
 import google.generativeai as genai
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+# Load env vars
+load_dotenv()
 
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -55,13 +59,43 @@ class CustomerEngagementAgent:
     def __init__(self):
         self.model = genai.GenerativeModel('gemini-pro')
 
-    async def generate_message(self, diagnosis: str, severity: str, conversation_history: List[dict] = []) -> str:
+    async def generate_message(self, diagnosis: str, severity: str, conversation_history: List[dict] = []) -> Dict:
         """
         Generate context-aware user alert/response using Gemini.
+        Returns a dictionary with message content and UI signals.
         """
         # Simplify history for the model
         history_text = "\n".join([f"{msg['sender']}: {msg['content']}" for msg in conversation_history[-5:]])
         
+        # Check for explicit booking intent from frontend (e.g. "Book the slot for 12/12/2025 at 09:30 AM")
+        booking_intent = None
+        cleaned_history_text = history_text
+        
+        if conversation_history:
+            last_msg = conversation_history[-1]
+            if last_msg['sender'] == 'user':
+                import re
+                # Pattern: Book the slot for 12/7/2025 at 09:30 AM
+                match = re.search(r"Book the slot for ([\d/]+) at ([\d:]+ [AP]M)", last_msg['content'])
+                if match:
+                    raw_date = match.group(1)
+                    booking_time = match.group(2)
+                    
+                    # Normalize Date to YYYY-MM-DD
+                    try:
+                        date_obj = datetime.strptime(raw_date, "%m/%d/%Y")
+                        formatted_date = date_obj.strftime("%Y-%m-%d")
+                    except ValueError:
+                        formatted_date = raw_date # Fallback
+                        
+                    booking_intent = {"date": formatted_date, "time": booking_time}
+                    # We have intent, so we do NOT want to show the UI. We want to execute booking.
+                    return {
+                        "content": "Processing your booking request...",
+                        "show_booking": False,
+                        "booking_intent": booking_intent
+                    }
+
         prompt = f"""
         You are an intelligent, polite, and professional autonomous vehicle assistant.
         Your goal is to inform the owner about a vehicle issue and help them book a service.
@@ -74,10 +108,10 @@ class CustomerEngagementAgent:
         CONVERSATION HISTORY:
         {history_text}
         
-        INSRUCTIONS:
+        INSTRUCTIONS:
         - If this is the first message (history is empty), inform the user about the issue neatly. Ask if they want to book.
-        - If the user agrees, ask for a time.
-        - If the user provides a time, pretend to check availability.
+        - If the user agrees to book (e.g. "Yes", "Book it") AND has NOT provided a specific time, your response MUST explicitly include the text "[SHOW_BOOKING_UI]" at the end.
+        - If the user JUST confirmed a slot (e.g. "Book the slot for..."), DO NOT include [SHOW_BOOKING_UI]. Just say you are confirming it.
         - Keep responses short (under 2 sentences).
         
         Your response:
@@ -85,23 +119,61 @@ class CustomerEngagementAgent:
         
         try:
             response = await self.model.generate_content_async(prompt)
-            return response.text
+            text = response.text
+            show_booking = "[SHOW_BOOKING_UI]" in text
+            clean_text = text.replace("[SHOW_BOOKING_UI]", "").strip()
+            
+            return {
+                "content": clean_text,
+                "show_booking": show_booking,
+                "booking_intent": None
+            }
         except Exception as e:
-            return f"⚠️ Alert: {diagnosis}. Please schedule service. (AI Offline)"
+            # Fallback logic if AI fails
+            show_booking_fallback = False
+            fallback_msg = f"⚠️ Alert: {diagnosis}. Please schedule service. (AI Offline)"
+            
+            # Simple intent check
+            if conversation_history:
+                last_msg = conversation_history[-1]
+                if last_msg['sender'] == 'user':
+                    user_text = last_msg['content'].lower()
+                    if "book" in user_text or "yes" in user_text or "schedule" in user_text:
+                        show_booking_fallback = True
+                        fallback_msg = "Opening scheduling assistant..."
+            
+            return {
+                "content": fallback_msg,
+                "show_booking": show_booking_fallback,
+                "booking_intent": None
+            }
 
 class SchedulingAgent:
-    def get_available_slots(self, date_str: str) -> List[str]:
-        # Mock logic: Returns 3 slots for the given date
-        # Randomly decide if a slot is 'booked' to force negotiation
-        return ["10:00 AM", "02:00 PM", "04:30 PM"]
+    def __init__(self):
+        self.api_url = "http://127.0.0.1:8000/api/service-center"
 
-    def check_slot_availability(self, date_str: str, time_str: str) -> bool:
-        # 50% chance of being booked
-        return random.choice([True, False])
+    async def get_available_slots(self, date_str: str) -> List[str]:
+        import httpx
+        async with httpx.AsyncClient() as client:
+            try:
+                resp = await client.get(f"{self.api_url}/slots", params={"date": date_str})
+                if resp.status_code == 200:
+                    return resp.json()
+            except Exception as e:
+                print(f"Scheduling Agent Error: {e}")
+        return []
 
-    def book_appointment(self, slot: str, vehicle_id: str) -> str:
-        # Generate mock Booking ID
-        return f"BK-{random.randint(10000, 99999)}"
+    async def book_appointment(self, slot: str, date: str, vehicle_id: str) -> str:
+        import httpx
+        async with httpx.AsyncClient() as client:
+            try:
+                payload = {"vin": vehicle_id, "slot": slot, "date": date}
+                resp = await client.post(f"{self.api_url}/book", json=payload)
+                if resp.status_code == 200:
+                    return resp.json()["booking_id"]
+            except Exception as e:
+                 print(f"Booking Error: {e}")
+        return "BK-FAILED"
 
 class RCAAgent:
     def analyze_failure(self, history: List[dict]) -> dict:

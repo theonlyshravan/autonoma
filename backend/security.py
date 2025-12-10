@@ -5,7 +5,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 import os
 from dotenv import load_dotenv
-from .schemas import TokenData
+from schemas import TokenData
 
 load_dotenv()
 

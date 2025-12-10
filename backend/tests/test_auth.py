@@ -1,5 +1,5 @@
 import pytest
-from backend.security import verify_password, get_password_hash, create_access_token, decode_access_token
+from security import verify_password, get_password_hash, create_access_token, decode_access_token
 from datetime import timedelta
 
 def test_password_hashing():

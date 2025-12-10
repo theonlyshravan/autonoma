@@ -4,7 +4,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface TelemetryChartProps {
-    data: any[];
+    data: Record<string, string | number>[];
     dataKey: string;
     color: string;
     title: string;

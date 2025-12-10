@@ -9,6 +9,7 @@ interface User {
     id: string;
     role: 'customer' | 'service' | 'manufacturer';
     exp: number;
+    name?: string;
 }
 
 interface AuthContextType {
@@ -40,7 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     setUser({
                         id: decoded.sub,
                         role: decoded.role,
-                        exp: decoded.exp
+                        exp: decoded.exp,
+                        name: decoded.name
                     });
                 }
             } catch (error) {
@@ -57,7 +59,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({
             id: decoded.sub,
             role: decoded.role,
-            exp: decoded.exp
+            exp: decoded.exp,
+            name: decoded.name
         });
 
         // Redirect based on role

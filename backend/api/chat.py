@@ -1,42 +1,56 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List
-from ..agents.workers import CustomerEngagementAgent, SchedulingAgent
+from typing import List, Optional, Any
+from agents.master import master_agent
+from agents.state import VehicleState
 
 router = APIRouter()
-customer_agent = CustomerEngagementAgent()
-scheduling_agent = SchedulingAgent()
-
-class ChatMessage(BaseModel):
-    items: List[dict] # {sender: str, content: str}
 
 class ChatRequest(BaseModel):
     message: str
     history: List[dict]
+    vin: str = "EV-8823-X"
 
 @router.post("/chat")
 async def chat_endpoint(req: ChatRequest):
     try:
         # Mock Context (In real app, fetch from DB/State)
-        diagnosis = "Battery Cell #4 Overheating (Risk of Thermal Runaway)"
-        severity = "Critical"
+        # We need to simulate the "Battery Overheating" context for the agent to behave correctly
+        initial_state: VehicleState = {
+            "vehicle_id": req.vin,
+            "current_data": {"battery_temperature": 65}, # Trigger Critical/High
+            "history": [],
+            "anomaly_detected": True,
+            "anomaly_reason": "battery temperature rises",
+            "diagnosis": "Battery Cell #4 Overheating", # Pre-populated for chat context
+            "severity": "Critical",
+            "messages": req.history + [{"sender": "user", "content": req.message}],
+            "show_booking_ui": False,
+            "available_slots": []
+        }
         
-        # Inject scheduling context if user asks about time
-        # This is a basic simulation of "tool use" via prompt context
-        available_slots = scheduling_agent.get_available_slots("tomorrow")
+        # Invoke Master Agent
+        final_state = await master_agent.ainvoke(initial_state)
         
-        # We append the current message to history effectively
-        full_history = req.history + [{"sender": "user", "content": req.message}]
+        # Extract response
+        last_message = ""
+        full_messages = final_state.get("messages", [])
+        if full_messages:
+            last_message_obj = full_messages[-1]
+            if last_message_obj["sender"] != "user":
+                last_message = last_message_obj["content"]
         
-        # If user accepts a slot, we simulate booking
-        if "book" in req.message.lower() and any(char.isdigit() for char in req.message):
-             response_text = f"Confirmed. I have booked a slot for you. You will receive a confirmation email shortly. Reference: {scheduling_agent.book_appointment('Mock', 'EV-1')}"
-        else:
-             response_text = await customer_agent.generate_message(
-                diagnosis, severity, full_history
-            )
+        return {
+            "response": last_message,
+            "show_booking_ui": final_state.get("show_booking_ui", False),
+            "available_slots": final_state.get("available_slots", [])
+        }
         
-        return {"response": response_text}
     except Exception as e:
         print(f"Chat Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Return fallback to keep UI alive
+        return {
+            "response": "I'm encountering some interference. Please try again.",
+            "show_booking_ui": False,
+            "available_slots": []
+        }
