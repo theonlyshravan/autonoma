@@ -33,9 +33,10 @@ import models # noqa
 # for 'autogenerate' support
 target_metadata = Base.metadata
 
+
 # Override URL from env
-# Override URL from env
-config.set_main_option("sqlalchemy.url", os.environ.get("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost/autonoma"))
+db_url = os.environ.get("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost/autonoma")
+config.set_main_option("sqlalchemy.url", db_url.replace("%", "%%"))
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -80,8 +81,12 @@ async def run_async_migrations() -> None:
 
     """
     configuration = config.get_section(config.config_ini_section, {})
-    # Force Postgres
-    configuration["sqlalchemy.url"] = "postgresql+asyncpg://postgres:postgres@localhost/autonoma"
+    # Use the URL we set in the config (which came from env)
+    # configuration["sqlalchemy.url"] is already set by set_main_option? 
+    # No, get_section returns a dict of the original ini file + defaults.
+    # We explicitly updated the config object, but get_section might grab from raw file?
+    # Safer to overwrite it here again from the config object which we updated.
+    configuration["sqlalchemy.url"] = config.get_main_option("sqlalchemy.url")
 
     connectable = async_engine_from_config(
         configuration,
