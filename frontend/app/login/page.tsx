@@ -10,6 +10,7 @@ import { ScannerInput } from '@/components/ui/ScannerInput';
 import { NeonButton } from '@/components/ui/NeonButton';
 import { Lock, Mail, ChevronRight, Fingerprint, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { API_URL } from '@/lib/config';
 
 export default function LoginPage() {
     const [loading, setLoading] = useState(true);
@@ -31,7 +32,7 @@ export default function LoginPage() {
         setIsAuthenticating(true);
 
         try {
-            const response = await axios.post('http://localhost:8000/api/auth/login',
+            const response = await axios.post(`${API_URL}/api/auth/login`,
                 new URLSearchParams({
                     'username': email,
                     'password': password

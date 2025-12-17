@@ -9,7 +9,9 @@ import { ScannerInput } from "@/components/ui/ScannerInput";
 import { BentoGrid, BentoGridItem } from "@/components/ui/BentoGrid";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { BookingInterface } from "@/components/BookingInterface";
+
 import { cn } from "@/lib/utils";
+import { API_URL } from "@/lib/config";
 
 type Message = {
     id: string;
@@ -47,10 +49,12 @@ export default function CustomerChatPage() {
     useEffect(() => {
         const checkStatus = async () => {
             try {
+
+
                 const token = localStorage.getItem("token");
                 if (!token) return;
 
-                const res = await fetch("http://localhost:8000/api/vehicles/my-status", {
+                const res = await fetch(`${API_URL}/api/vehicles/my-status`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 const data = await res.json();
@@ -116,7 +120,7 @@ export default function CustomerChatPage() {
 
         try {
             // Call Backend API
-            const res = await fetch("http://localhost:8000/api/chat", {
+            const res = await fetch(`${API_URL}/api/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

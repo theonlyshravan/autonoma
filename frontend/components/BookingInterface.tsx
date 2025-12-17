@@ -5,6 +5,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSam
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { API_URL } from "@/lib/config";
 
 interface BookingInterfaceProps {
     onBook: (date: Date, slot: string) => void;
@@ -27,7 +28,7 @@ export function BookingInterface({ onBook, availableSlots = [] }: BookingInterfa
             try {
                 // Format YYYY-MM-DD
                 const dateStr = format(selectedDate, "yyyy-MM-dd");
-                const res = await fetch(`http://localhost:8000/api/service-center/slots?date=${dateStr}`);
+                const res = await fetch(`${API_URL}/api/service-center/slots?date=${dateStr}`);
                 if (res.ok) {
                     const slots = await res.json();
                     setFetchedSlots(slots);

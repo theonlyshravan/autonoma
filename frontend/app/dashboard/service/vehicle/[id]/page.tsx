@@ -6,6 +6,7 @@ import { ArrowLeft, Activity, Thermometer, Zap, AlertTriangle, CheckCircle } fro
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { API_URL } from "@/lib/config";
 
 type Booking = {
     id: string;
@@ -47,7 +48,7 @@ export default function VehicleDetailsPage() {
 
         const fetchBooking = async () => {
             try {
-                const res = await fetch(`http://localhost:8000/api/service-center/booking/${id}`);
+                const res = await fetch(`${API_URL}/api/service-center/booking/${id}`);
                 if (res.ok) {
                     const data = await res.json();
                     setBooking(data);

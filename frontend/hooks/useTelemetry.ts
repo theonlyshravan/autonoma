@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { TelemetryData, AgentAlert, ChatMessage } from '../types';
+import { WS_URL } from '@/lib/config';
 
 export function useTelemetry() {
     const [telemetry, setTelemetry] = useState<TelemetryData | null>(null);
@@ -12,7 +13,7 @@ export function useTelemetry() {
 
     useEffect(() => {
         // Connect to Backend WS
-        ws.current = new WebSocket('ws://localhost:8000/ws/telemetry');
+        ws.current = new WebSocket(WS_URL);
 
         ws.current.onopen = () => {
             console.log('Connected to Telemetry Stream');

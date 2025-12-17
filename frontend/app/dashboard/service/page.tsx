@@ -5,6 +5,7 @@ import { ServiceCalendar, Booking } from "@/components/ServiceCalendar";
 import { LiveFeed } from "@/components/LiveFeed";
 import { DailyBookingsModal } from "@/components/DailyBookingsModal";
 import { BentoGrid, BentoGridItem } from "@/components/ui/BentoGrid";
+import { API_URL } from "@/lib/config";
 
 export default function ServiceDashboard() {
     // State
@@ -15,7 +16,7 @@ export default function ServiceDashboard() {
     useEffect(() => {
         const fetchBookings = async () => {
             try {
-                const res = await fetch("http://localhost:8000/api/service-center/bookings");
+                const res = await fetch(`${API_URL}/api/service-center/bookings`);
                 if (res.ok) {
                     const data = await res.json();
                     setBookings(data);

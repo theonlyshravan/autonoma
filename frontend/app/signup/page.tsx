@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Scan, ShieldCheck, ArrowRight, User, Car } from "lucide-react";
+import { API_URL } from "@/lib/config";
 
 export default function SignupPage() {
     const router = useRouter();
@@ -49,7 +50,7 @@ export default function SignupPage() {
                 vehicle_type: "EV" // Defaulting to EV for now
             };
 
-            const response = await fetch("http://localhost:8000/api/auth/register", {
+            const response = await fetch(`${API_URL}/api/auth/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
