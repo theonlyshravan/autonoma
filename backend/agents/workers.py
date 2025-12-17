@@ -1,9 +1,12 @@
 import os
 import random
-import google.generativeai as genai
-from typing import List, Dict, Optional
+import json
+import logging
+import uuid
+from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+import google.generativeai as genai
 
 # Load env vars
 load_dotenv()
@@ -123,6 +126,24 @@ class CustomerEngagementAgent:
             show_booking = "[SHOW_BOOKING_UI]" in text
             clean_text = text.replace("[SHOW_BOOKING_UI]", "").strip()
             
+            # Additional heuristic: If user says "Yes" and history suggests we asked to book, force show_booking
+            if not show_booking and conversation_history:
+                last_user_msg = conversation_history[-1]
+                # Heuristic override
+                if last_user_msg['sender'] == 'user':
+                    user_content = last_user_msg['content'].lower()
+                    
+                    # Check for affirmative response
+                    if any(x in user_content for x in ["yes", "sure", "ok", "book"]):
+                         last_bot_msg = next((m for m in reversed(conversation_history[:-1]) if m['sender'] == 'bot'), None)
+                         if last_bot_msg:
+                             content = last_bot_msg.get('content', '').lower()
+                             
+                             is_booking_prompt = ("book" in content and "slot" in content) or "appointment" in content
+                             
+                             if is_booking_prompt:
+                                 show_booking = True
+
             return {
                 "content": clean_text,
                 "show_booking": show_booking,

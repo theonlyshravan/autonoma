@@ -10,7 +10,8 @@ import {
     Settings,
     LogOut,
     ShieldCheck,
-    Activity // Icon for Actions
+    Activity, // Icon for Actions
+    Box
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/app/contexts/AuthContext";
@@ -38,40 +39,53 @@ export function Sidebar() {
     const roleKey = (user?.role || "customer") as keyof typeof navItems;
     const activeGroup = navItems[roleKey] || navItems.customer;
 
+    // Assuming isCollapsed is managed elsewhere or is always false for this context
+    const isCollapsed = false;
+
     return (
-        <div className="flex flex-col h-full w-64 border-r border-white/10 bg-[#1c1d22] text-foreground">
-            <div className="p-6 border-b border-white/10">
-                <h1 className="text-2xl font-display font-bold text-foreground tracking-tighter">
-                    AUTONOMA
-                </h1>
-                <p className="text-xs text-muted-foreground font-mono mt-1 tracking-widest text-primary">
-                    SYSTEM V1.0 // {user?.role?.toUpperCase()}
-                </p>
+        <div className="flex flex-col h-full w-64 border-r border-white/10 bg-[#050505]/80 backdrop-blur-md text-foreground relative overflow-hidden">
+            {/* Ambient Background Glow */}
+            <div className="absolute -top-20 -left-20 w-64 h-64 bg-neon-cyan/5 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="p-4 flex items-center gap-3 mb-8">
+                <Link href="/dashboard" className="flex items-center gap-2 group">
+                    <div className="relative w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl border border-white/10 group-hover:border-neon-cyan/50 group-hover:shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all duration-300">
+                        <Box className="w-6 h-6 text-neon-cyan group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className={`transition-all duration-300 ${isCollapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100 w-auto"}`}>
+                        <h1 className="font-display font-bold text-xl tracking-wider text-white">
+                            AUTONOMA
+                        </h1>
+                    </div>
+                </Link>
             </div>
 
-            <nav className="flex-1 p-4 space-y-2">
-                {activeGroup.map((item) => (
-                    <Link key={item.href} href={item.href}>
-                        <Button
-                            variant="ghost"
-                            className={cn(
-                                "w-full justify-start transition-all duration-200",
-                                pathname === item.href
-                                    ? "bg-primary/10 text-primary border-r-2 border-primary rounded-none"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                            )}
-                        >
-                            <item.icon className="mr-2 h-4 w-4" />
-                            {item.name}
-                        </Button>
-                    </Link>
-                ))}
+            <nav className="flex-1 p-4 space-y-2 relative z-10">
+                {activeGroup.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                        <Link key={item.href} href={item.href}>
+                            <Button
+                                variant="ghost"
+                                className={cn(
+                                    "w-full justify-start transition-all duration-300 font-sans tracking-wide",
+                                    isActive
+                                        ? "bg-neon-cyan/10 text-neon-cyan border-r-2 border-neon-cyan rounded-none shadow-[0_0_15px_rgba(0,240,255,0.2)]"
+                                        : "text-muted-foreground hover:text-white hover:bg-white/5 hover:pl-5"
+                                )}
+                            >
+                                <item.icon className={cn("mr-3 h-4 w-4", isActive && "drop-shadow-[0_0_5px_rgba(0,240,255,0.8)]")} />
+                                {item.name}
+                            </Button>
+                        </Link>
+                    );
+                })}
             </nav>
 
-            <div className="p-4 border-t border-white/10">
+            <div className="p-4 border-t border-white/10 relative z-10">
                 <Button
                     variant="outline"
-                    className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                    className="w-full justify-start text-destructive hover:text-red-400 hover:bg-destructive/10 border-destructive/20 hover:border-destructive/50 transition-all duration-300 font-mono text-xs tracking-widest uppercase"
                     onClick={logout}
                 >
                     <LogOut className="mr-2 h-4 w-4" />

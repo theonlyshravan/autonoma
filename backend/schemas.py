@@ -23,14 +23,31 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    full_name: Optional[str] = None
+    phone_number: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class UserRegistration(BaseModel):
+    # User Details
+    email: EmailStr
+    password: str
+    full_name: str
+    phone_number: str
+    
+    # Vehicle Details
+    vin: str
+    model: str
+    year: int
+    vehicle_type: str = "EV"
+
 class User(UserBase):
     id: UUID
     is_active: bool = True
+    full_name: Optional[str] = None
+    phone_number: Optional[str] = None
 
     class Config:
         from_attributes = True

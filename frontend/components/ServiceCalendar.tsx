@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, subMonths, addMonths } from "date-fns";
-import { Card } from "@/components/ui/card";
+import { GlassCard } from "@/components/ui/GlassCard"; // Using GlassCard for internal structure if reasonable, or just styling div
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -35,34 +35,38 @@ export function ServiceCalendar({ bookings, onDateClick }: ServiceCalendarProps)
     const emptyDays = Array.from({ length: startDay });
 
     return (
-        <Card className="h-full bg-card/50 backdrop-blur-sm border-white/10 p-6 flex flex-col">
+        <div className="h-full bg-transparent p-6 flex flex-col">
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
-                    <div className="p-2 bg-primary/20 rounded-lg text-primary">
-                        <CalendarIcon className="w-6 h-6" />
+                    <div className="p-2 bg-acid-lime/10 border border-acid-lime/20 rounded-lg text-acid-lime shadow-[0_0_10px_rgba(57,255,20,0.2)]">
+                        <CalendarIcon className="w-5 h-5" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold font-display uppercase tracking-wider">
-                            Service_Schedule // {format(currentMonth, "MMM yyyy")}
+                        <h2 className="text-xl font-bold font-display uppercase tracking-wider text-white">
+                            {format(currentMonth, "MMMM yyyy")}
                         </h2>
-                        <p className="text-xs text-muted-foreground font-mono">
-                            {bookings.length} ACTIVE APPOINTMENTS
-                        </p>
+                        <div className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-acid-lime animate-pulse" />
+                            <p className="text-[10px] text-acid-lime/70 font-mono tracking-widest">
+                                {bookings.length} PENDING IN QUEUE
+                            </p>
+                        </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
-                        <ChevronLeft className="w-5 h-5" />
+                <div className="flex items-center gap-1 border border-white/10 rounded-lg bg-black/20 p-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10 hover:text-white text-gray-400" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+                        <ChevronLeft className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-                        <ChevronRight className="w-5 h-5" />
+                    <div className="w-[1px] h-4 bg-white/10" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10 hover:text-white text-gray-400" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+                        <ChevronRight className="w-4 h-4" />
                     </Button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-7 mb-4 text-center">
+            <div className="grid grid-cols-7 mb-4 text-center border-b border-white/5 pb-2">
                 {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
-                    <div key={day} className="text-xs font-mono text-muted-foreground py-2">{day}</div>
+                    <div key={day} className="text-[10px] font-mono text-gray-500 tracking-widest">{day}</div>
                 ))}
             </div>
 
@@ -83,35 +87,30 @@ export function ServiceCalendar({ bookings, onDateClick }: ServiceCalendarProps)
                             key={day.toString()}
                             onClick={() => onDateClick?.(day, dayBookings)}
                             className={`
-                                relative p-3 rounded-xl border transition-all cursor-pointer group flex flex-col justify-between
-                                ${isToday ? "border-primary/50 bg-primary/5" : "border-white/5 bg-black/20"}
-                                ${hasBookings ? "hover:border-primary hover:bg-primary/10 hover:shadow-lg hover:shadow-primary/10" : "hover:bg-white/5"}
+                                relative p-3 rounded-lg border transition-all duration-300 cursor-pointer group flex flex-col justify-between
+                                ${isToday ? "border-acid-lime/50 bg-acid-lime/5 shadow-[0_0_15px_rgba(57,255,20,0.1)]" : "border-white/5 bg-white/5"}
+                                ${hasBookings ? "hover:border-acid-lime/30 hover:bg-acid-lime/5" : "hover:bg-white/10 hover:border-white/20"}
                             `}
                         >
-                            <span className={`text-sm font-mono ${isToday ? "text-primary font-bold" : "text-muted-foreground group-hover:text-foreground"}`}>
+                            <span className={`text-sm font-mono ${isToday ? "text-acid-lime font-bold" : "text-gray-400 group-hover:text-white"}`}>
                                 {format(day, "d")}
                             </span>
 
                             {hasBookings && (
                                 <div className="mt-2">
                                     <div className={`
-                                        inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold w-full justify-center transition-colors
-                                        ${hasHighSeverity
-                                            ? "bg-amber-500/10 text-amber-500 border border-amber-500/20 group-hover:bg-amber-500/20"
-                                            : "bg-blue-500/10 text-blue-400 border border-blue-500/20 group-hover:bg-blue-500/20"}
+                                        flex items-center justify-center h-1.5 w-full gap-0.5
                                     `}>
-                                        <span>{dayBookings.length} APPT{dayBookings.length > 1 ? 'S' : ''}</span>
-                                    </div>
-
-                                    {/* Visual dots for specific bookings (max 3) */}
-                                    <div className="flex gap-1 justify-center mt-2">
                                         {dayBookings.slice(0, 3).map((b, i) => (
                                             <div
                                                 key={i}
-                                                className={`w-1.5 h-1.5 rounded-full ${b.severity === 'High' ? 'bg-red-500' : 'bg-emerald-500'}`}
+                                                className={`w-1.5 h-1.5 rounded-full ${b.severity === 'High' ? 'bg-plasma-magenta shadow-[0_0_5px_#FF0099]' : 'bg-acid-lime shadow-[0_0_5px_#39FF14]'}`}
                                             />
                                         ))}
-                                        {dayBookings.length > 3 && <div className="w-1.5 h-1.5 rounded-full bg-muted" />}
+                                        {dayBookings.length > 3 && <div className="w-1 h-1 rounded-full bg-gray-600" />}
+                                    </div>
+                                    <div className="mt-2 text-[9px] font-mono text-center text-gray-500 group-hover:text-acid-lime transition-colors">
+                                        {dayBookings.length} SLOT{dayBookings.length > 1 ? 'S' : ''}
                                     </div>
                                 </div>
                             )}
@@ -119,6 +118,6 @@ export function ServiceCalendar({ bookings, onDateClick }: ServiceCalendarProps)
                     );
                 })}
             </div>
-        </Card>
+        </div>
     );
 }

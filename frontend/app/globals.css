@@ -1,60 +1,91 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #1c1d22;
-  /* Shadow Grey */
+  /* High-Voltage Palette */
+  --color-neon-cyan: #00F0FF;
+  --color-plasma-magenta: #FF0099;
+  --color-acid-lime: #39FF14;
+  --color-deep-void: #050505;
+  --color-void-light: #0a0f1e;
+
+  /* Semantic Colors */
+  --color-background: var(--color-deep-void);
   --color-foreground: #ffffff;
-
-  --color-card: #313b44;
-  /* Jet Black */
-  --color-card-foreground: #aaabad;
-  /* Silver */
-
-  --color-popover: #313b44;
-  --color-popover-foreground: #aaabad;
-
-  --color-primary: #e62815;
-  /* Burnt Tangerine */
-  --color-primary-foreground: #ffffff;
-
-  --color-secondary: #8b4944;
-  /* Clay Soil */
+  --color-card: rgba(255, 255, 255, 0.03);
+  --color-card-foreground: #ffffff;
+  --color-popover: var(--color-void-light);
+  --color-popover-foreground: #ffffff;
+  --color-primary: var(--color-neon-cyan);
+  --color-primary-foreground: #000000;
+  --color-secondary: var(--color-plasma-magenta);
   --color-secondary-foreground: #ffffff;
-
-  --color-muted: #606467;
-  /* Dim Grey */
-  --color-muted-foreground: #aaabad;
-
-  --color-accent: #606467;
-  --color-accent-foreground: #ffffff;
-
-  --color-destructive: #e62815;
+  --color-muted: rgba(255, 255, 255, 0.1);
+  --color-muted-foreground: rgba(255, 255, 255, 0.6);
+  --color-accent: rgba(0, 240, 255, 0.1);
+  --color-accent-foreground: var(--color-neon-cyan);
+  --color-destructive: #ff3333;
   --color-destructive-foreground: #ffffff;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-input: rgba(255, 255, 255, 0.05);
+  --color-ring: var(--color-neon-cyan);
 
-  --color-border: #606467;
-  --color-input: #313b44;
-  --color-ring: #e62815;
-
-  --color-shadow-grey: #1c1d22;
-  --color-jet-black: #313b44;
-  --color-dim-grey: #606467;
-  --color-silver: #aaabad;
-  --color-burnt-tangerine: #e62815;
-  --color-clay-soil: #8b4944;
-
-  --font-display: var(--font-unbounded), sans-serif;
+  /* Fonts */
+  --font-display: var(--font-orbitron), sans-serif;
   --font-sans: var(--font-rajdhani), sans-serif;
   --font-mono: var(--font-jetbrains-mono), monospace;
 
-  --radius: 0.5rem;
+  /* Animation Variables */
+  --animate-scanline: scanline 2s linear infinite;
+  --animate-ripple: ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+  --animate-glitch: glitch 1s linear infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  @keyframes scanline {
+    0% {
+      transform: translateX(-100%);
+    }
+
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes ripple {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+
+    100% {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
 }
 
+/* Glassmorphism Utilities */
 @utility glass-panel {
-  @apply bg-[#0F1012]/80 backdrop-blur-xl border border-white/5 shadow-2xl;
+  @apply backdrop-blur-[24px] backdrop-saturate-[180%] border border-white/10 shadow-2xl;
+  background-color: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
-@utility text-glow {
-  text-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+@utility glass-panel-hover {
+  @apply transition-all duration-300;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    @apply border-white/20;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  }
+}
+
+@utility neon-text {
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.7), 0 0 20px rgba(0, 240, 255, 0.5);
+}
+
+@utility neon-border {
+  box-shadow: 0 0 5px var(--color-neon-cyan), inset 0 0 5px var(--color-neon-cyan);
 }
 
 @layer base {
@@ -65,26 +96,23 @@
   body {
     @apply bg-background text-foreground antialiased font-sans overflow-x-hidden;
     background-image:
-      radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.05) 0%, transparent 50%),
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+      radial-gradient(circle at 50% -20%, rgba(0, 240, 255, 0.1) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(255, 0, 153, 0.1) 0%, transparent 30%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
     background-attachment: fixed;
+    background-size: cover, cover, 128px 128px;
   }
 
+  /* Custom Scrollbar for "Control Deck" feel */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: #030303;
+    width: 6px;
+    height: 6px;
+    background: #000;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #1f2937;
-    border-radius: 4px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #374151;
+    background: var(--color-neon-cyan);
+    border-radius: 3px;
+    box-shadow: 0 0 5px var(--color-neon-cyan);
   }
 }

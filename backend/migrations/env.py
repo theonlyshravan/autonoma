@@ -34,7 +34,8 @@ import models # noqa
 target_metadata = Base.metadata
 
 # Override URL from env
-config.set_main_option("sqlalchemy.url", os.environ.get("DATABASE_URL"))
+# Override URL from env
+config.set_main_option("sqlalchemy.url", os.environ.get("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost/autonoma"))
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -78,9 +79,12 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
+    configuration = config.get_section(config.config_ini_section, {})
+    # Force Postgres
+    configuration["sqlalchemy.url"] = "postgresql+asyncpg://postgres:postgres@localhost/autonoma"
 
     connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

@@ -15,3 +15,7 @@ passlib[bcrypt]
 python-dotenv
 greenlet
 alembic
+aiosqlite
+email-validator
+python-multipart
+google-generativeai

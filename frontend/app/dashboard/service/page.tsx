@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { ServiceCalendar, Booking } from "@/components/ServiceCalendar";
 import { LiveFeed } from "@/components/LiveFeed";
 import { DailyBookingsModal } from "@/components/DailyBookingsModal";
+import { BentoGrid, BentoGridItem } from "@/components/ui/BentoGrid";
 
 export default function ServiceDashboard() {
     // State
@@ -30,23 +31,33 @@ export default function ServiceDashboard() {
     }, []);
 
     return (
-        <div className="h-[calc(100vh-6rem)] p-4 md:p-8 max-w-[1600px] mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="h-full w-full p-4 md:p-8 bg-transparent">
+            <header className="mb-6">
+                <h1 className="text-4xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-acid-lime to-white tracking-widest neon-text">
+                    SERVICE SCHEDULE
+                </h1>
+                <p className="text-xs font-mono text-acid-lime/60 tracking-[0.3em] uppercase mt-1">
+                    APPOINTMENT LOGISTICS // SECTOR 7
+                </p>
+            </header>
 
-            {/* Calendar Section */}
-            <div className="lg:col-span-2 h-full">
-                <ServiceCalendar
-                    bookings={bookings}
-                    onDateClick={(date, dayBookings) => {
-                        setSelectedDate(date);
-                        setDailyBookings(dayBookings);
-                    }}
-                />
-            </div>
+            <BentoGrid className="grid-cols-1 md:grid-cols-3 auto-rows-[minmax(300px,auto)]">
+                {/* Calendar Section (2x2 on desktop) */}
+                <BentoGridItem colSpan={2} className="row-span-2 md:col-span-2 bg-black/40 border-none p-0 overflow-hidden">
+                    <ServiceCalendar
+                        bookings={bookings}
+                        onDateClick={(date, dayBookings) => {
+                            setSelectedDate(date);
+                            setDailyBookings(dayBookings);
+                        }}
+                    />
+                </BentoGridItem>
 
-            {/* Live Feed Section */}
-            <div className="lg:col-span-1 h-full">
-                <LiveFeed />
-            </div>
+                {/* Live Feed Section (Right Column) */}
+                <BentoGridItem colSpan={1} className="row-span-2 md:col-span-1 bg-black/40 border-none p-0 overflow-hidden">
+                    <LiveFeed />
+                </BentoGridItem>
+            </BentoGrid>
 
             {/* Daily Bookings List Modal */}
             <DailyBookingsModal

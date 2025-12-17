@@ -1,40 +1,52 @@
-from fastapi import APIRouter
-from typing import List
-from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Optional
+from datetime import datetime
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
-router = APIRouter(prefix="/api/vehicles", tags=["vehicles"])
+from database import get_db
+from models import Vehicle, User, AnomalyEvent
+from api.auth import get_current_user
 
-# Mock Data
-MOCK_BOOKINGS = [
-    {"id": "BK-1001", "vin": "EV-8823-X", "owner": "Alice Doe", "time": "2025-10-25 10:00 AM", "status": "PENDING", "issue": "Battery Thermal Warning"},
-    {"id": "BK-1002", "vin": "ICE-4040-Y", "owner": "Bob Smith", "time": "2025-10-25 02:00 PM", "status": "CONFIRMED", "issue": "Vibration / Mount Check"},
-    {"id": "BK-1003", "vin": "EV-9900-Z", "owner": "Charlie Day", "time": "2025-10-26 09:00 AM", "status": "COMPLETED", "issue": "Routine Inspection"}
-]
+router = APIRouter(tags=["vehicles"])
 
-@router.get("/{vin}/history")
-async def get_vehicle_history(vin: str):
-    # Return mock anomaly history
-    return [
-        {
-            "id": "e1",
-            "timestamp": (datetime.now() - timedelta(minutes=15)).isoformat(),
-            "anomaly_type": "Battery Temp High",
-            "severity": "High",
-            "diagnosis": "Coolant pump obstruction detected.",
-            "confidence": 0.92
+@router.get("/my-status")
+async def get_my_vehicle_status(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    # Fetch User's Vehicle
+    result = await db.execute(select(Vehicle).where(Vehicle.owner_id == current_user.id).options(selectinload(Vehicle.anomalies)))
+    vehicle = result.scalars().first()
+    
+    if not vehicle:
+        return {"vehicle": None, "anomaly": None}
+
+    # Get latest anomaly
+    # anomalies are eager loaded, but just in case
+    latest_anomaly = None
+    if vehicle.anomalies:
+        # Sort by date
+        sorted_anomalies = sorted(vehicle.anomalies, key=lambda x: x.detected_at, reverse=True)
+        latest_anomaly = sorted_anomalies[0]
+        
+    return {
+        "user": {
+            "full_name": current_user.full_name,
+            "email": current_user.email,
+            "phone_number": current_user.phone_number
         },
-        {
-            "id": "e2",
-            "timestamp": (datetime.now() - timedelta(hours=24)).isoformat(),
-            "anomaly_type": "Vibration Spike",
-            "severity": "Medium",
-            "diagnosis": "Uneven road surface or minor tire imbalance.",
-            "confidence": 0.75
-        }
-    ]
+        "vehicle": {
+            "vin": vehicle.vin,
+            "model": vehicle.model,
+            "year": vehicle.year
+        },
+        "anomaly": {
+            "type": latest_anomaly.anomaly_type,
+            "severity": latest_anomaly.severity.value,
+            "description": f"Sensors indicate {latest_anomaly.anomaly_type}" 
+            # Note: storing detailed msg in diagnosis or inferring
+        } if latest_anomaly else None
+    }
 
-@router.get("/bookings/all")
-async def get_all_bookings(status: str = None):
-    if status:
-        return [b for b in MOCK_BOOKINGS if b["status"] == status]
-    return MOCK_BOOKINGS

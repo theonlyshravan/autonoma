@@ -20,6 +20,20 @@ feedback_agent = FeedbackAgent()
 async def data_analysis_node(state: VehicleState):
     print(f"--- Data Analysis [VIN: {state.get('vehicle_id')}] ---")
     updates = data_agent.analyze(state["current_data"])
+    
+    # Check if we already had a detected anomaly (e.g. from DB in chat context)
+    # and if the fresh analysis didn't find anything (or overwrote it).
+    # We should preserve the DB truth for the conversation context.
+    if state.get("anomaly_detected") and not updates.get("anomaly_detected"):
+        updates["anomaly_detected"] = True
+        # Preserve details if missing in updates
+        if state.get("anomaly_reason"):
+            updates["anomaly_reason"] = state["anomaly_reason"]
+        if state.get("severity"):
+            updates["severity"] = state["severity"]
+        if state.get("rul"):
+            updates["rul"] = state["rul"]
+            
     return updates
 
 async def diagnosis_node(state: VehicleState):
@@ -88,7 +102,8 @@ async def rca_node(state: VehicleState):
 
 # Edge Logic
 def route_after_analysis(state: VehicleState) -> Literal["diagnosis", "end"]:
-    target = "diagnosis" if state["anomaly_detected"] else "end"
+    target = "diagnosis" if state.get("anomaly_detected") else "end"
+    
     if not ueba_agent.check_transition("data_analysis", target):
         return "end"
     return target

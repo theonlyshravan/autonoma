@@ -1,22 +1,47 @@
 "use client";
 
 import { useAuth } from "@/app/contexts/AuthContext";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Phone, Mail, Car, Calendar, ShieldCheck } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 export default function CustomerSettingsPage() {
     const { user } = useAuth();
+    const [userDetails, setUserDetails] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-    // Mock user details if not fully present in auth context
-    const userDetails = {
-        name: user?.name || "The Only User",
-        phone: "+91 98765 43210",
-        email: user?.email || "user@example.com",
-        vehicleName: "Tesla Model S Plaid",
-        vehicleNumber: "EV-8823-X",
-        issuedDate: "2024-08-15"
-    };
+    useEffect(() => {
+        const fetchDetails = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) return;
+
+                const res = await fetch("http://localhost:8000/api/vehicles/my-status", {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data) {
+                    setUserDetails({
+                        name: data.user?.full_name || "N/A",
+                        phone: data.user?.phone_number || "N/A",
+                        email: data.user?.email || "N/A",
+                        vehicleName: data.vehicle?.model || "N/A",
+                        vehicleNumber: data.vehicle?.vin || "N/A",
+                        issuedDate: data.vehicle?.year ? `Model Year ${data.vehicle.year}` : "N/A"
+                    });
+                }
+            } catch (e) {
+                console.error("Failed to fetch settings", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDetails();
+    }, []);
+
+    if (loading) return <div className="p-8 text-neon-cyan animate-pulse">LOADING PROFILE...</div>;
 
     return (
         <div className="h-full p-8 flex flex-col gap-6 max-w-4xl mx-auto w-full">
@@ -39,21 +64,21 @@ export default function CustomerSettingsPage() {
                             <User className="w-4 h-4 text-muted-foreground" />
                             <div>
                                 <p className="text-xs text-muted-foreground">FULL NAME</p>
-                                <p className="text-sm font-medium text-foreground">{userDetails.name}</p>
+                                <p className="text-sm font-medium text-foreground">{userDetails?.name}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 p-3 bg-black/20 rounded border border-white/5">
                             <Phone className="w-4 h-4 text-muted-foreground" />
                             <div>
                                 <p className="text-xs text-muted-foreground">PHONE</p>
-                                <p className="text-sm font-medium text-foreground">{userDetails.phone}</p>
+                                <p className="text-sm font-medium text-foreground">{userDetails?.phone}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 p-3 bg-black/20 rounded border border-white/5">
                             <Mail className="w-4 h-4 text-muted-foreground" />
                             <div>
                                 <p className="text-xs text-muted-foreground">EMAIL</p>
-                                <p className="text-sm font-medium text-foreground">{userDetails.email}</p>
+                                <p className="text-sm font-medium text-foreground">{userDetails?.email}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -72,21 +97,21 @@ export default function CustomerSettingsPage() {
                             <Car className="w-4 h-4 text-muted-foreground" />
                             <div>
                                 <p className="text-xs text-muted-foreground">VEHICLE NAME</p>
-                                <p className="text-sm font-medium text-foreground">{userDetails.vehicleName}</p>
+                                <p className="text-sm font-medium text-foreground">{userDetails?.vehicleName}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 p-3 bg-black/20 rounded border border-white/5">
                             <ShieldCheck className="w-4 h-4 text-muted-foreground" />
                             <div>
                                 <p className="text-xs text-muted-foreground">VEHICLE NUMBER</p>
-                                <p className="text-sm font-medium text-foreground font-mono">{userDetails.vehicleNumber}</p>
+                                <p className="text-sm font-medium text-foreground font-mono">{userDetails?.vehicleNumber}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 p-3 bg-black/20 rounded border border-white/5">
                             <Calendar className="w-4 h-4 text-muted-foreground" />
                             <div>
                                 <p className="text-xs text-muted-foreground">ISSUED DATE</p>
-                                <p className="text-sm font-medium text-foreground">{userDetails.issuedDate}</p>
+                                <p className="text-sm font-medium text-foreground">{userDetails?.issuedDate}</p>
                             </div>
                         </div>
                     </CardContent>
