@@ -19,3 +19,4 @@ aiosqlite
 email-validator
 python-multipart
 google-generativeai
+gunicorn
